@@ -39,8 +39,7 @@ X-ray **essential tag** 기준으로 DICOM 메타데이터의 품질을 **series
 - 즉 한 instance가 태그 N개를 가지면 N개 행이 됩니다.
 - `Value`가 `"['PA']"`(리스트 문자열)이나 `"PA\LAT"`(DICOM `\` 다중값)이어도 파싱됩니다.
 
-> `df_input` 만드는 방법 예시는 저장소의 `../../characterization_260709.ipynb`
-> (S3 long-parquet → df_input 변환)을 참고하세요. **본 가이드는 df_input이 이미 있다고 가정합니다.**
+> **본 가이드는 df_input이 이미 있다고 가정합니다.**
 
 ---
 
