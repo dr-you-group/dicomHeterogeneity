@@ -5,16 +5,75 @@ This project evaluates how closely real-world DICOM metadata conforms to the DIC
 ## Structure
 
 - `DicomStandardEvaluator/`
-  - `DicomStandardEvaluator_example.ipynb`: evaluation walkthrough
+  - `DicomStandardEvaluator_example.ipynb`: evaluation walkthrough (IOD/instance-based)
+  - `CxrEssentialTagEvaluator_example.ipynb`: X-ray essential-tag, series-level walkthrough
   - `Evaluator/`
-    - `DicomCodeStandardEvaluator.py`: main evaluator class
+    - `DicomCodeStandardEvaluator.py`: main evaluator class (IOD/Type, instance-level)
     - `DicomCodeStandardEvaluator_withoutVR.py`: evaluator variant without VR
+    - `CxrEssentialTagEvaluator.py`: X-ray essential-tag, **series-level, IOD-free** evaluator
     - `DicomCodeStandardEvaluator.md`: class description
 - `DicomStandardRetrieval/`
   - `DicomStandardRetrieval_2014c.ipynb`: 2014c reference processing
+  - `build_cxr_essential_reference.py`: build the CXR essential-tag reference set
 - `files/`
   - `DicomStandardReference_2014c/`: 2014c reference Excel files
   - `DicomStandardReference_2025c/`: 2025c reference Excel files
+  - `CxrEssentialTags/`: X-ray essential-tag reference set (with CS allowable values)
+
+## CXR Essential-Tag Evaluator (series-level, IOD-free)
+
+`CxrEssentialTagEvaluator` evaluates real-world DICOM metadata against a flat list of
+X-ray **essential tags** (`files/CxrEssentialTags/CxrEssentialTags_ReferenceSet.xlsx`),
+differing from `DicomCodeStandardEvaluator` in two ways:
+
+- **IOD / Type are ignored** — every essential tag is treated as Type 1 and compared
+  uniformly (no per-IOD standard subsetting).
+- **The unit of aggregation is the series**, not the instance. Within a series, if even
+  one instance has the tag / a value / a conforming value, that series counts as
+  present / valued / conforming.
+
+### Input schema (`df_dataset`)
+
+`IOD` (0008,0016), `study_instance_uid` (0020,000D),
+`series_instance_uid` (0020,000E) *(aggregation key)*,
+`Manufacturer` (0008,0070), `ScannerModel` (0008,1090),
+`Tag`, `AttributeName`, `Value`.
+
+### Metrics (all series-level)
+
+- `tag_completeness`   = (series with tag) / (total series)
+- `value_completeness` = (series with value) / (series with tag)
+- `value_conformance`  = (series whose CS value conforms) / (series with CS value),
+  computed for `VR == 'CS'` tags only. **Comparison is case-insensitive**
+  (`CHEST` == `chest` → PASS). Allowable values come from the reference set's
+  `CS_allowable_values` (sourced from `cxr-metadata-field_260709.xlsx`).
+
+### Conformance sub-report
+
+`conformance_subreport()` splits non-exact CS values into two buckets:
+
+- **partial** — not an exact match but *contains* an allowable term as a word
+  (e.g. expected `CHEST`, got `port chest`): count + `value_counts`.
+- **none** — contains no allowable term at all: count + percentage + `value_counts`.
+
+`export_conformance_subreport(prefix)` writes `*_summary.csv`, `*_partial.csv`,
+`*_none.csv`. `export_unconformed_values(path)` writes the combined
+`Tag, Attribute Name, Defined Values, Unconformed Value` CSV.
+
+### Example
+
+```python
+from CxrEssentialTagEvaluator import CxrEssentialTagEvaluator
+
+df_standard = pd.read_excel('files/CxrEssentialTags/CxrEssentialTags_ReferenceSet.xlsx')
+evaluator = CxrEssentialTagEvaluator(df_dataset, df_standard)
+
+overall = evaluator.analyze(group_cols=None)                    # whole dataset
+rates, stats = evaluator.analyze_with_stats(['Manufacturer'])   # per-group + heterogeneity
+report = evaluator.conformance_subreport()                      # summary / partial / none
+```
+
+See `DicomStandardEvaluator/CxrEssentialTagEvaluator_example.ipynb`.
 
 ## Quick Start
 
