@@ -1,5 +1,19 @@
 # dicomHeterogeneity
 
+## 🚀 Fastest Way to Try This: CXR Essential-Tag Pipeline (One Notebook)
+
+Just clone this repo and run a single notebook — no other setup beyond editing a few path variables.
+
+```bash
+git clone https://github.com/dr-you-group/dicomHeterogeneity.git
+```
+
+Then open `example/cxr_essential_tag_pipeline.ipynb` (Korean guide: `example/cxr_essential_tag_pipeline_document.docx`) —
+or the English version, `example/cxr_essential_tag_pipeline_eng.ipynb`
+(guide: `example/cxr_essential_tag_pipeline_document_eng.docx`) — in Jupyter, edit the path
+variables in the first "user configuration" cell, and run all cells top to bottom.
+The notebook takes a raw CXR DICOM folder straight to the 5 final quality-evaluation CSV files.
+
 This project evaluates how closely real-world DICOM metadata conforms to the DICOM standard and quantifies heterogeneity across institutions and manufacturers. It compares actual metadata against standard references (2025c/2014c) to compute tag presence, value presence, standardization rate, and value diversity.
 
 ## Structure
